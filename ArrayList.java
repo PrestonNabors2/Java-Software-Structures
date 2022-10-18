@@ -1,74 +1,201 @@
+//********************************************************************
+//  ArrayList.java       Authors: Lewis/Chase
+//
+//  Represents an array implementation of a list. The front of
+//  the list is kept at array index 0. This class will be extended
+//  to create a specific kind of list.
+//********************************************************************
 package jsjf;
 import jsjf.exceptions.*;
+import java.util.Iterator;
 
-/**
- * ArrayList represents an array implementation of a list. The front of * the list is kept at array index 0. This class will be extended
- * to create a specific kind of list. *
- * @author Lewis and Chase * @version 4.0 */
-public abstract class ArrayList<T> implements ListADT<T>, Iterable<T> {
-    private final static int DEFAULT_CAPACITY = 100; private final static int NOT_FOUND = -1; protected int rear; protected T[] list; protected int modCount;
-    /**
-     * Creates an empty list using the default capacity. */
-    public ArrayList() {
-        this(DEFAULT_CAPACITY); } /**
- * Creates an empty list using the specified capacity. *
- * @param initialCapacity the size of the array list */
-    public ArrayList(int initialCapacity) {
+public class ArrayList<T> implements ListADT<T>, Iterable<T>
+{
+    protected final int DEFAULT_CAPACITY = 100;
+    private final int NOT_FOUND = -1;
+    protected int rear;
+    protected T[] list;
+
+    /******************************************************************
+     Creates an empty list using the default capacity.
+     ******************************************************************/
+    public ArrayList()
+    {
         rear = 0;
-        list = (T[])(new Object[initialCapacity]); modCount = 0;
+        list = (T[])(new Object[DEFAULT_CAPACITY]);
     }
-    /**
-     * Removes and returns the specified element. *
-     * @param element the element to be removed and returned from the list * @return the removed element
-     * @throws ElementNotFoundException if the element is not in the list */
-    public T remove(T element) {
+
+    /******************************************************************
+     Creates an empty list using the specified capacity.
+     ******************************************************************/
+    public ArrayList (int initialCapacity)
+    {
+        rear = 0;
+        list = (T[])(new Object[initialCapacity]);
+    }
+
+    /******************************************************************
+     Removes and returns the last element in the list.
+     ******************************************************************/
+    public T removeLast () throws EmptyCollectionException
+    {
         T result;
-        int index = find(element);
+
+        if (isEmpty())
+            throw new EmptyCollectionException ("list");
+
+        rear--;
+        result = list[rear];
+        list[rear] = null;
+
+        return result;
+    }
+
+    /******************************************************************
+     Removes and returns the first element in the list.
+     ******************************************************************/
+    public T removeFirst() throws EmptyCollectionException
+    {
+        if (isEmpty())
+            throw new EmptyCollectionException ("list");
+
+        T result = list[0];
+        rear--;
+        /** shift the elements */
+        for (int scan=0; scan < rear; scan++)
+            list[scan] = list[scan+1];
+
+        list[rear] = null;
+
+        return result;
+    }
+
+    /******************************************************************
+     Removes and returns the specified element.
+     ******************************************************************/
+    public T remove (T element)
+    {
+        T result;
+        int index = find (element);
+
         if (index == NOT_FOUND)
-            throw new ElementNotFoundException("ArrayList");
+            throw new ElementNotFoundException ("list");
+
         result = list[index];
         rear--;
-// shift the appropriate elements for (int scan=index; scan < rear; scan++) list[scan] = list[scan+1]; list[rear] = null; modCount++; return result;
+        /** shift the appropriate elements */
+        for (int scan=index; scan < rear; scan++)
+            list[scan] = list[scan+1];
+
+        list[rear] = null;
+
+        return result;
     }
-    /** * Returns the array index of the specified element, or the
-     * constant NOT_FOUND if it is not found. *
-     * @param target the target element
-     * @return the index of the target element, or the *
-    NOT_FOUND constant */
-    private int find(T target) {
-        int scan = 0;
-        int result = NOT_FOUND; if (!isEmpty())
-            while (result == NOT_FOUND && scan < rear) if (target.equals(list[scan])) result = scan;
-            else scan++; return result; }
-    /**
-     * Returns true if this list contains the specified element. *
-     * @param target the target element
-     * @return true if the target is in the list, false otherwise */
-    public boolean contains(T target) {
-        return (find(target) != NOT_FOUND); }
-/**
- * Adds the specified Comparable element to this list, keeping * the elements in sorted order. *
- * @param element the element to be added to the list */
-public void add(T element) {
-    if (!(element instanceof Comparable))
-        throw new NonComparableElementException("OrderedList");
-        Comparable<T> comparableElement = (Comparable<T>)element;
-    if (size() == list.length) expandCapacity();
-    int scan = 0; // find the insertion location
-    while (scan < rear && comparableElement.compareTo(list[scan]) > 0) scan++;
-// shift existing elements up one
-    for (int shift=rear; shift > scan; shift--) list[shift] = list[shift-1]; // insert element
-    list[scan] = element; rear++;
-    modCount++; }
-    /** * Adds the specified element after the specified target element.
-     * Throws an ElementNotFoundException if the target is not found. *
-     * @param element the element to be added after the target element * @param target the target that the element is to be added after */
-    public void addAfter(T element, T target) {
-        if (size() == list.length) expandCapacity();
-        int scan = 0; // find the insertion point
-        while (scan < rear && !target.equals(list[scan])) scan++;
-        if (scan == rear) throw new ElementNotFoundException("UnorderedList"); scan++; // shift elements up one
-        for (int shift=rear; shift > scan; shift--) list[shift] = list[shift-1];
-// insert element
-        list[scan] = element; rear++;
-        modCount++;}
+
+    /******************************************************************
+     Returns a reference to the element at the front of the list.
+     The element is not removed from the list.  Throws an
+     EmptyCollectionException if the list is empty.  
+     ******************************************************************/
+    public T first() throws EmptyCollectionException
+    {
+        if (isEmpty())
+            throw new EmptyCollectionException ("list");
+
+        return list[0];
+    }
+
+    /******************************************************************
+     Returns a reference to the element at the rear of the list.
+     The element is not removed from the list.  Throws an
+     EmptyCollectionException if the list is empty.  
+     ******************************************************************/
+    public T last() throws EmptyCollectionException
+    {
+        if (isEmpty())
+            throw new EmptyCollectionException ("list");
+
+        return list[rear-1];
+    }
+
+    /******************************************************************
+     Returns true if this list contains the specified element.
+     ******************************************************************/
+    public boolean contains (T target)
+    {
+        return (find(target) != NOT_FOUND);
+    }
+
+    /******************************************************************
+     Returns the array index of the specified element, or the
+     constant NOT_FOUND if it is not found.
+     ******************************************************************/
+    private int find (T target)
+    {
+        int scan = 0, result = NOT_FOUND;
+        boolean found = false;
+
+        if (! isEmpty())
+            while (! found && scan < rear)
+                if (target.equals(list[scan]))
+                    found = true;
+                else
+                    scan++;
+
+        if (found)
+            result = scan;
+
+        return result;
+    }
+
+    /******************************************************************
+     Returns true if this list is empty and false otherwise. 
+     ******************************************************************/
+    public boolean isEmpty()
+    {
+        return (rear == 0);
+    }
+
+    /******************************************************************
+     Returns the number of elements currently in this list.
+     ******************************************************************/
+    public int size()
+    {
+        return rear;
+    }
+
+    /******************************************************************
+     Returns an iterator for the elements currently in this list.
+     ******************************************************************/
+    public Iterator<T> iterator()
+    {
+        return new ArrayIterator<T> (list, rear);
+    }
+
+    /******************************************************************
+     Returns a string representation of this list. 
+     ******************************************************************/
+    public String toString()
+    {
+        String result = "";
+
+        for (int scan=0; scan < rear; scan++)
+            result = result + list[scan].toString() + "\n";
+
+        return result;
+    }
+
+    /******************************************************************
+     Creates a new array to store the contents of the list with
+     twice the capacity of the old one.
+     ******************************************************************/
+    protected void expandCapacity()
+    {
+        T[] larger = (T[])(new Object[list.length*2]);
+
+        for (int scan=0; scan < list.length; scan++)
+            larger[scan] = list[scan];
+
+        list = larger;
+    }
+}
